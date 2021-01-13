@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html oncontextmenu="return false">
+<head>
+  <title></title>
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    background-image: url('media/stars.gif');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas
+  {
+    border: 1px solid white;
+    position: relative;
+    height: 90vh;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #p1
+  {
+    color:red;
+	position:absolute;
+	left:100px;
+	top:10px;
+  }
+  #p2
+  {
+    color:red;
+	position:absolute;
+	left:100px;
+	top:40px;
+  }
+  #p3
+  {
+    color:orange;
+	position:absolute;
+	left:100px;
+	top:90px;
+  }
+  #score
+  {
+    color:yellow;
+    position:absolute;
+	left:255px;
+	top:10px;
+  }
+  #high
+  {
+    color:yellow;
+    position:absolute;
+	left:345px;
+	top:40px;
+  }
+  #pname
+  {
+    color:limegreen;
+    position:absolute;
+	left:250px;
+	top:90px;
+  }
+  #countdown
+  {
+    color:white;
+    position:absolute;
+        left:100px;
+	top:120px;
+  }
+  video 
+  {
+    object-fit: cover;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  </style>
+</head>
+<body>
+<audio autoplay id="myaudio" allow="autoplay" loop preload="auto">
+   <source src="media/vitality.mp3" type="audio/mpeg">
+</audio>
+<script>
+document.onkeydown = function (e) { 
+            if (event.keyCode == 123) { 
+                return false; 
+            } 
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { 
+                return false; 
+            } 
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { 
+                return false; 
+            } 
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { 
+                return false; 
+            } 
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { 
+                return false; 
+            } 
+        }
+var currentHtmlContent; 
+var element = new Image(); 
+var elementWithHiddenContent = document.querySelector('high'); 
+var innerHtml = elementWithHiddenContent.innerHTML;  
+element.__defineGetter__("id", function() { 
+    currentHtmlContent= ""; 
+}); 
+setInterval(function() { 
+    currentHtmlContent= innerHtml; 
+    console.log(element); 
+    console.clear();  
+    elementWithHiddenContent.innerHTML = currentHtmlContent; 
+}, 1000); 
+</script>
+
+<h1 id="p1">SCORE:</h1>
+<h1 id="p2">HIGHSCORE:</h1>
+<h2 id="p3">Player Name:<br></h2>
+<h1 id="score"></h1>
+<h1 id="high"></h1>
+<h2 id="pname"></h2>
+<h1 id="countdown"></h1>
+<canvas width="400" height="400" id="game"></canvas>
+<script>
+var myName=prompt('Enter Employee ID and Nickname')
+document.getElementById('pname').innerHTML=myName;
+var canvas = document.getElementById('game');
+var context = canvas.getContext('2d');
+var grid = 16;
+var count = 0;
+var score=0;
+var max=0;  
+var timeleft = 10;
+var downloadTimer = 0;
+
+var snake = {
+  x: 160,
+  y: 160,
+  
+  // snake velocity. moves one grid length every frame in either the x or y direction
+  dx: grid,
+  dy: 0,
+  
+  // keep track of all grids the snake body occupies
+  cells: [],
+  
+  // length of the snake. grows when eating an apple
+  maxCells: 4
+};
+var apple = {
+  x: 320,
+  y: 320
+};
+
+// get random whole numbers in a specific range
+// @see https://stackoverflow.com/a/1527820/2124254
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+// Holds Screen
+function pause() {
+  myVar = setTimeout(alertFunc);
+}
+function alertFunc() {
+  alert("Hi " + myName +", your High Score is " + max);
+}
+function timer() {
+downloadTimer = setInterval(function(){
+  if(timeleft <= 0){
+      clearInterval(downloadTimer);
+      document.getElementById("countdown").innerHTML = "Finished";
+  } else {
+      document.getElementById("countdown").innerHTML = "Game Over in "+timeleft + "s";
+}
+  timeleft -= 1;}, 1000);
+}
+timer();
+// game loop
+function loop() {
+  requestAnimationFrame(loop);
+  // slow game loop to 15 fps instead of 60 (60/15 = 4)
+  if (++count < 6) {
+    return;
+  }
+  count = 0;
+  context.clearRect(0,0,canvas.width,canvas.height);
+  // move snake by it's velocity
+  snake.x += snake.dx;
+  snake.y += snake.dy;
+  // wrap snake position horizontally on edge of screen
+  if (snake.x < 0) {
+    snake.x = canvas.width - grid;
+  }
+  else if (snake.x >= canvas.width) {
+    snake.x = 0;
+  }
+  
+  // wrap snake position vertically on edge of screen
+  if (snake.y < 0) {
+    snake.y = canvas.height - grid;
+  }
+  else if (snake.y >= canvas.height) {
+    snake.y = 0;
+  }
+  // keep track of where snake has been. front of the array is always the head
+  snake.cells.unshift({x: snake.x, y: snake.y});
+  // remove cells as we move away from them
+  if (snake.cells.length > snake.maxCells) {
+    snake.cells.pop();
+  }
+  // draw apple
+  context.fillStyle = 'red';
+  context.fillRect(apple.x, apple.y, grid-1, grid-1);
+  // draw snake one cell at a time
+  context.fillStyle = 'green'
+  snake.cells.forEach(function(cell, index) {
+    
+    // drawing 1 px smaller than the grid creates a grid effect in the snake body so you can see how long it is
+    context.fillRect(cell.x, cell.y, grid-1, grid-1);  
+    // snake ate apple
+    if (cell.x === apple.x && cell.y === apple.y) {
+      snake.maxCells++;
+	  score+=10;
+	  //max=score;
+	  timeleft+=2;
+	  document.getElementById('score').innerHTML=score;
+	
+      // canvas is 400x400 which is 25x25 grids 
+      apple.x = getRandomInt(0, 25) * grid;
+      apple.y = getRandomInt(0, 25) * grid;
+    }
+    // check collision with all cells after this one (modified bubble sort)
+    for (var i = index + 1; i < snake.cells.length; i++)
+	{
+      
+      // snake occupies same space as a body part. reset game
+      if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) 
+	 { 
+	    if(score>max)
+	    {
+	     max=score;
+	    }
+	pause()
+    	snake.x = 160;
+        snake.y = 160;
+        snake.cells = [];
+        snake.maxCells = 4;
+        snake.dx = grid;
+        snake.dy = 0;
+		score=0;
+		clearInterval(downloadTimer);
+		timeleft = 10;
+		timer();
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+	    document.getElementById('high').innerHTML=max;
+      }
+      if (timeleft === -1) 
+	 { 
+	    if(score>max)
+	    {
+	     max=score;
+	    }
+	pause()
+    	snake.x = 160;
+        snake.y = 160;
+        snake.cells = [];
+        snake.maxCells = 4;
+        snake.dx = grid;
+        snake.dy = 0;
+		score=0;
+		clearInterval(downloadTimer);
+		timeleft = 10;
+		timer();
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+	    document.getElementById('high').innerHTML=max;
+      }
+    }
+  }
+  
+  );
+  
+}
+// listen to keyboard events to move the snake
+document.addEventListener('keydown', function(e) {
+  // prevent snake from backtracking on itself by checking that it's 
+  // not already moving on the same axis (pressing left while moving
+  // left won't do anything, and pressing right while moving left
+  // shouldn't let you collide with your own body)
+  
+  // left arrow key
+  if (e.which === 37 && snake.dx === 0) {
+    snake.dx = -grid;
+    snake.dy = 0;
+  }
+  // up arrow key
+  else if (e.which === 38 && snake.dy === 0) {
+    snake.dy = -grid;
+    snake.dx = 0;
+  }
+  // right arrow key
+  else if (e.which === 39 && snake.dx === 0) {
+    snake.dx = grid;
+    snake.dy = 0;
+  }
+  // down arrow key
+  else if (e.which === 40 && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+});
+// start the game
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
